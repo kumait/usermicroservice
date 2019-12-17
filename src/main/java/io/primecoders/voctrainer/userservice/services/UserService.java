@@ -2,10 +2,12 @@ package io.primecoders.voctrainer.userservice.services;
 
 import io.primecoders.voctrainer.userservice.infra.IdGenerator;
 import io.primecoders.voctrainer.userservice.infra.security.TokenService;
+import io.primecoders.voctrainer.userservice.infra.security.TokenType;
 import io.primecoders.voctrainer.userservice.models.business.ChangePasswordModel;
 import io.primecoders.voctrainer.userservice.models.business.ResetPasswordModel;
 import io.primecoders.voctrainer.userservice.models.business.User;
 import io.primecoders.voctrainer.userservice.models.common.AccountStatus;
+import io.primecoders.voctrainer.userservice.models.common.UserRole;
 import io.primecoders.voctrainer.userservice.models.entities.UserEntity;
 import io.primecoders.voctrainer.userservice.repositories.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -48,7 +50,7 @@ public class UserService implements UserDetailsService {
                 .disabled(userEntity.getAccountStatus() != AccountStatus.ACTIVE)
                 .accountExpired(false)
                 .credentialsExpired(false)
-                .authorities(userEntity.getUserType().toString())
+                .authorities(userEntity.getRole().toString())
                 .build();
         return user;
     }
@@ -57,13 +59,14 @@ public class UserService implements UserDetailsService {
         UserEntity userEntity = mapper.map(user, UserEntity.class);
         userEntity.setId(idGenerator.getNewId());
         userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
+        userEntity.setRole(UserRole.USER);
         userEntity.setAccountStatus(AccountStatus.NEW);
         userRepository.save(userEntity);
         return mapper.map(userEntity, User.class);
     }
 
     public void activateAccount(String token) {
-        String username = tokenService.getUsernameFromAccountActivationToken(token);
+        String username = tokenService.verifyAndGet(token, TokenType.PASSWORD_RESET).getUsername();
         UserEntity userEntity = requireExists(userRepository.findByUsername(username));
         affirm(userEntity.getAccountStatus() != AccountStatus.NEW, "Account is already active or disabled.");
 
@@ -72,7 +75,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void resetPassword(ResetPasswordModel resetPasswordModel) {
-        String username = tokenService.getUsernameFromPasswordResetToken(resetPasswordModel.getToken());
+        String username = tokenService.verifyAndGet(resetPasswordModel.getToken(), TokenType.PASSWORD_RESET).getUsername();
         UserEntity userEntity = requireExists(userRepository.findByUsername(username));
         userEntity.setPassword(passwordEncoder.encode(resetPasswordModel.getNewPassword()));
         userRepository.save(userEntity);
@@ -85,6 +88,4 @@ public class UserService implements UserDetailsService {
         userEntity.setPassword(passwordEncoder.encode(changePasswordModel.getNewPassword()));
         userRepository.save(userEntity);
     }
-
-
 }

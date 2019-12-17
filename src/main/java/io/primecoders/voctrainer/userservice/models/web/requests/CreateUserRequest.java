@@ -1,5 +1,6 @@
 package io.primecoders.voctrainer.userservice.models.web.requests;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,6 +9,7 @@ import javax.validation.constraints.Size;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class CreateUserRequest {
     @NotEmpty
     @Size(min = 2, max = 100)

@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -18,8 +19,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-
-    public static final String AUTH_TOKEN_HEADER = "security.authentication.header";
+    public static final String AUTH_TOKEN_HEADER = "security.authentication-token-header";
+    public static final String REF_TOKEN_HEADER = "security.refresh-token-header";
     private final UserService userService;
     private final TokenService tokenService;
 
@@ -46,8 +47,14 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) {
         String username = authResult.getName();
         UserDetails userDetails = userService.loadUserByUsername(username);
-        String authenticationToken = tokenService.createAuthenticationToken(userDetails.getUsername());
-        response.addHeader(AUTH_TOKEN_HEADER, authenticationToken);
+        String roles = authResult.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .reduce((i1, i2) -> i1 + "," + i2)
+                .orElse(null);
+        String[] authenticationTokens = tokenService.createAuthenticationTokens(userDetails.getUsername(), roles);
+        response.addHeader(AUTH_TOKEN_HEADER, authenticationTokens[0]);
+        response.addHeader(REF_TOKEN_HEADER, authenticationTokens[1]);
     }
 
     @Override

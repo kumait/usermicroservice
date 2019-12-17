@@ -1,5 +1,5 @@
 package io.primecoders.voctrainer.userservice.models.common;
 
-public enum UserType {
+public enum UserRole {
     USER, ADMIN
 }

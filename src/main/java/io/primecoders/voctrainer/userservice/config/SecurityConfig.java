@@ -1,6 +1,7 @@
 package io.primecoders.voctrainer.userservice.config;
 
 import io.primecoders.voctrainer.userservice.infra.security.AuthenticationFilter;
+import io.primecoders.voctrainer.userservice.infra.security.AuthorizationFilter;
 import io.primecoders.voctrainer.userservice.infra.security.TokenService;
 import io.primecoders.voctrainer.userservice.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +15,14 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import java.util.Objects;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    public static final String ENV_SECURITY_LOGIN_URL = "security.login.url";
     private final UserService userService;
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
@@ -35,8 +38,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private AbstractAuthenticationProcessingFilter authenticationFilter() throws Exception {
         AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager(), userService, tokenService, environment);
-        authenticationFilter.setFilterProcessesUrl(Objects.requireNonNull(environment.getProperty("api.login.url")));
+        authenticationFilter.setFilterProcessesUrl(Objects.requireNonNull(environment.getProperty(ENV_SECURITY_LOGIN_URL)));
         return authenticationFilter;
+    }
+
+    private BasicAuthenticationFilter authorizationFilter() throws Exception {
+        return new AuthorizationFilter(authenticationManager(), tokenService);
     }
 
     @Override
@@ -55,6 +62,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().anyRequest().authenticated();
 
         // add the login filter
+        http.addFilter(authenticationFilter());
+
+        // add authorization filter
         http.addFilter(authenticationFilter());
     }
 
