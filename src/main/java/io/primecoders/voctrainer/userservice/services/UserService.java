@@ -41,16 +41,23 @@ public class UserService implements UserDetailsService {
         this.idGenerator = idGenerator;
     }
 
+    /**
+     *
+     *
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserEntity userEntity = userRepository.findByUsername(username);
+        /*UserEntity userEntity = userRepository.findByUsername(username);
+        if (userEntity == null) {
+            throw new UsernameNotFoundException("username not found");
+        }*/
         UserDetails user = org.springframework.security.core.userdetails.User.builder()
-                .username(userEntity.getUsername())
-                .password(userEntity.getPassword())
-                .disabled(userEntity.getAccountStatus() != AccountStatus.ACTIVE)
+                .username("test")
+                .password(passwordEncoder.encode("test123456"))
+                .disabled(true)
                 .accountExpired(false)
                 .credentialsExpired(false)
-                .authorities(userEntity.getRole().toString())
+                .authorities("USER")
                 .build();
         return user;
     }

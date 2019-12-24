@@ -2,6 +2,7 @@ package io.primecoders.voctrainer.userservice;
 
 import io.primecoders.voctrainer.userservice.infra.security.TokenService;
 import io.primecoders.voctrainer.userservice.models.web.requests.CreateUserRequest;
+import io.primecoders.voctrainer.userservice.models.web.requests.LoginRequest;
 import io.primecoders.voctrainer.userservice.models.web.responses.CreateUserResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,26 +10,24 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class IntegrationTest {
+    public static final String FIRST_NAME = "John";
+    public static final String LAST_NAME = "Tester";
     public static final String EMAIL = "test@test.com";
     public static final String PASSWORD = "password";
     public static final String NEW_PASSWORD = "new_password";
-
-    public static final String NAME = "Test";
+    public static final String LOGIN_URL = "/login";
 
     @LocalServerPort
     private int port;
@@ -51,9 +50,30 @@ public class IntegrationTest {
         return headers;
     }
 
-    private ResponseEntity<CreateUserResponse> createUser(CreateUserRequest createUserRequest) throws IOException {
+    @Test()
+    public void testCreateUser() throws IOException {
+        CreateUserRequest createUserRequest = new CreateUserRequest(FIRST_NAME, LAST_NAME, EMAIL, PASSWORD);
         HttpEntity<CreateUserRequest> entity = new HttpEntity<>(createUserRequest, headers(null));
-        return restTemplate.exchange(getUrl("/users"), HttpMethod.POST, entity, CreateUserResponse.class);
+        ResponseEntity<CreateUserResponse> createUserResponseResponseEntity = restTemplate.exchange(getUrl("/users"), HttpMethod.POST, entity, CreateUserResponse.class);
+        assertEquals(HttpStatus.CREATED, createUserResponseResponseEntity.getStatusCode());
+        CreateUserResponse createUserResponse = createUserResponseResponseEntity.getBody();
+        assertNotNull(createUserResponse);
+        assertAll(() -> {
+            assertEquals(createUserRequest.getUsername(), createUserResponse.getUsername());
+            assertEquals(createUserRequest.getFirstName(), createUserResponse.getFirstName());
+            assertEquals(createUserRequest.getLastName(), createUserResponse.getLastName());
+            assertNotNull(createUserResponse.getId());
+        });
+    }
+
+    @Test()
+    public void testLogin() {
+        ResponseEntity<Void> loginResponseEntity = restTemplate.exchange(getUrl(LOGIN_URL), HttpMethod.POST,
+                new HttpEntity<>(new LoginRequest("fakeusername", "fakepassword"), headers(null)), Void.class);
+        assertEquals(HttpStatus.FORBIDDEN, loginResponseEntity.getStatusCode());
+
+
+
     }
 
     /*private ResponseEntity<String> activate(EmailActivationDto emailActivationDto) {
@@ -112,11 +132,11 @@ public class IntegrationTest {
         return restTemplate.exchange(getUrl("/api/entries/" + entryId), HttpMethod.GET, entity, EntryDto.class).getBody();
     }*/
 
-    @Test
     public void test() throws IOException {
         // create user
-        CreateUserResponse createUserResponse = createUser(new CreateUserRequest("john", "jack", EMAIL, PASSWORD)).getBody();
-        assertNotNull(createUserResponse);
+
+
+
 
 
 
