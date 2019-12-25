@@ -1,6 +1,7 @@
 package io.primecoders.voctrainer.userservice.services;
 
 import io.primecoders.voctrainer.userservice.infra.IdGenerator;
+import io.primecoders.voctrainer.userservice.infra.exceptions.business.AccountNotActiveException;
 import io.primecoders.voctrainer.userservice.infra.security.TokenService;
 import io.primecoders.voctrainer.userservice.infra.security.TokenType;
 import io.primecoders.voctrainer.userservice.models.business.ChangePasswordModel;
@@ -41,16 +42,16 @@ public class UserService implements UserDetailsService {
         this.idGenerator = idGenerator;
     }
 
-    /**
-     *
-     *
-     */
+    // Special method used by Spring Security
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        /*UserEntity userEntity = userRepository.findByUsername(username);
+        UserEntity userEntity = userRepository.findByUsername(username);
         if (userEntity == null) {
             throw new UsernameNotFoundException("username not found");
-        }*/
+        }
+        if (userEntity.getAccountStatus() == AccountStatus.NEW) {
+            throw new AccountNotActiveException();
+        }
         UserDetails user = org.springframework.security.core.userdetails.User.builder()
                 .username("test")
                 .password(passwordEncoder.encode("test123456"))

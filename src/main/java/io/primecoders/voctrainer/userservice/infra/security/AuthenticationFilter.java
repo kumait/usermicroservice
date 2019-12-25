@@ -2,6 +2,7 @@ package io.primecoders.voctrainer.userservice.infra.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.primecoders.voctrainer.userservice.models.web.requests.LoginRequest;
+import io.primecoders.voctrainer.userservice.models.web.responses.ErrorResponse;
 import io.primecoders.voctrainer.userservice.services.UserService;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -59,7 +60,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        response.getOutputStream().print("\n\ntest");
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(response.getWriter(), new ErrorResponse(failed));
         super.unsuccessfulAuthentication(request, response, failed);
     }
 }

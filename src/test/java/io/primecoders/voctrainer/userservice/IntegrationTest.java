@@ -32,7 +32,7 @@ public class IntegrationTest {
     @LocalServerPort
     private int port;
 
-    private final TestRestTemplate restTemplate = new TestRestTemplate();
+    private final TestRestTemplate rest = new TestRestTemplate();
 
     @Autowired
     private TokenService tokenService;
@@ -54,7 +54,7 @@ public class IntegrationTest {
     public void testCreateUser() throws IOException {
         CreateUserRequest createUserRequest = new CreateUserRequest(FIRST_NAME, LAST_NAME, EMAIL, PASSWORD);
         HttpEntity<CreateUserRequest> entity = new HttpEntity<>(createUserRequest, headers(null));
-        ResponseEntity<CreateUserResponse> createUserResponseResponseEntity = restTemplate.exchange(getUrl("/users"), HttpMethod.POST, entity, CreateUserResponse.class);
+        ResponseEntity<CreateUserResponse> createUserResponseResponseEntity = rest.exchange(getUrl("/users"), HttpMethod.POST, entity, CreateUserResponse.class);
         assertEquals(HttpStatus.CREATED, createUserResponseResponseEntity.getStatusCode());
         CreateUserResponse createUserResponse = createUserResponseResponseEntity.getBody();
         assertNotNull(createUserResponse);
@@ -67,13 +67,10 @@ public class IntegrationTest {
     }
 
     @Test()
-    public void testLogin() {
-        ResponseEntity<Void> loginResponseEntity = restTemplate.exchange(getUrl(LOGIN_URL), HttpMethod.POST,
-                new HttpEntity<>(new LoginRequest("fakeusername", "fakepassword"), headers(null)), Void.class);
+    public void testFailedLogin() {
+        HttpEntity<LoginRequest> entity = new HttpEntity<>(new LoginRequest("fake_username", "fake_password"));
+        ResponseEntity<Void> loginResponseEntity = rest.exchange(getUrl(LOGIN_URL), HttpMethod.POST, entity, Void.class);
         assertEquals(HttpStatus.FORBIDDEN, loginResponseEntity.getStatusCode());
-
-
-
     }
 
     /*private ResponseEntity<String> activate(EmailActivationDto emailActivationDto) {

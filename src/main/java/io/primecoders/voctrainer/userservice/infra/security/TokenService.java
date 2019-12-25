@@ -5,8 +5,8 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
-import io.primecoders.voctrainer.userservice.infra.exceptions.InvalidTokenException;
-import io.primecoders.voctrainer.userservice.infra.exceptions.TokenExpiredException;
+import io.primecoders.voctrainer.userservice.infra.exceptions.business.InvalidTokenException;
+import io.primecoders.voctrainer.userservice.infra.exceptions.business.TokenExpiredException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

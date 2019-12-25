@@ -1,6 +1,6 @@
 package io.primecoders.voctrainer.userservice.infra;
 
-import io.primecoders.voctrainer.userservice.infra.exceptions.TokenExpiredException;
+import io.primecoders.voctrainer.userservice.infra.exceptions.business.TokenExpiredException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 

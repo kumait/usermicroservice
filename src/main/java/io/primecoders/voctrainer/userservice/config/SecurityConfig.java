@@ -58,6 +58,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // allow status access
         http.authorizeRequests().antMatchers("/status/**").permitAll();
 
+        http.authorizeRequests().antMatchers("/users/create-test-users").permitAll();
+
         // all other places require authentication
         http.authorizeRequests().anyRequest().authenticated();
 
