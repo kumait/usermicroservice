@@ -1,7 +1,6 @@
 package io.primecoders.voctrainer.userservice.services;
 
 import io.primecoders.voctrainer.userservice.infra.IdGenerator;
-import io.primecoders.voctrainer.userservice.infra.exceptions.business.AccountNotActiveException;
 import io.primecoders.voctrainer.userservice.infra.security.TokenService;
 import io.primecoders.voctrainer.userservice.infra.security.TokenType;
 import io.primecoders.voctrainer.userservice.models.business.ChangePasswordModel;
@@ -49,21 +48,22 @@ public class UserService implements UserDetailsService {
         if (userEntity == null) {
             throw new UsernameNotFoundException("username not found");
         }
-        if (userEntity.getAccountStatus() == AccountStatus.NEW) {
-            throw new AccountNotActiveException();
-        }
+
         UserDetails user = org.springframework.security.core.userdetails.User.builder()
-                .username("test")
-                .password(passwordEncoder.encode("test123456"))
-                .disabled(true)
-                .accountExpired(false)
+                .username(userEntity.getUsername())
+                .password(userEntity.getPassword())
+                .disabled(userEntity.getAccountStatus() == AccountStatus.DISABLED)
+                .accountExpired(userEntity.getAccountStatus() == AccountStatus.NEW)
                 .credentialsExpired(false)
-                .authorities("USER")
+                .authorities(userEntity.getRole().toString())
                 .build();
         return user;
     }
 
     public User createUser(User user) {
+        UserEntity existing = userRepository.findByUsername(user.getUsername());
+        affirm(existing == null, "ACCOUNT_ALREADY_EXISTS");
+
         UserEntity userEntity = mapper.map(user, UserEntity.class);
         userEntity.setId(idGenerator.getNewId());
         userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -76,7 +76,9 @@ public class UserService implements UserDetailsService {
     public void activateAccount(String token) {
         String username = tokenService.verifyAndGet(token, TokenType.PASSWORD_RESET).getUsername();
         UserEntity userEntity = requireExists(userRepository.findByUsername(username));
-        affirm(userEntity.getAccountStatus() != AccountStatus.NEW, "Account is already active or disabled.");
+
+        affirmAccess(!(userEntity.getAccountStatus() == AccountStatus.DISABLED), "ACCOUNT_IS_DISABLED");
+        affirm(!(userEntity.getAccountStatus() == AccountStatus.ACTIVE), "ACCOUNT_ALREADY_ACTIVE");
 
         userEntity.setAccountStatus(AccountStatus.ACTIVE);
         userRepository.save(userEntity);

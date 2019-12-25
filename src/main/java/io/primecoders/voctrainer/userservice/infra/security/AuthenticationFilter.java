@@ -2,11 +2,9 @@ package io.primecoders.voctrainer.userservice.infra.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.primecoders.voctrainer.userservice.models.web.requests.LoginRequest;
-import io.primecoders.voctrainer.userservice.models.web.responses.ErrorResponse;
 import io.primecoders.voctrainer.userservice.services.UserService;
 import org.springframework.core.env.Environment;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
@@ -24,11 +22,13 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     public static final String REF_TOKEN_HEADER = "security.refresh-token-header";
     private final UserService userService;
     private final TokenService tokenService;
+    private final Environment environment;
 
     public AuthenticationFilter(AuthenticationManager authenticationManager, UserService userService, TokenService tokenService, Environment environment) {
         setAuthenticationManager(authenticationManager);
         this.userService = userService;
         this.tokenService = tokenService;
+        this.environment = environment;
     }
 
     @Override
@@ -39,9 +39,8 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
             Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
             return getAuthenticationManager().authenticate(authentication);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new BadCredentialsException(null);
         }
-        return null;
     }
 
     @Override
@@ -54,14 +53,18 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                 .reduce((i1, i2) -> i1 + "," + i2)
                 .orElse(null);
         String[] authenticationTokens = tokenService.createAuthenticationTokens(userDetails.getUsername(), roles);
-        response.addHeader(AUTH_TOKEN_HEADER, authenticationTokens[0]);
-        response.addHeader(REF_TOKEN_HEADER, authenticationTokens[1]);
+        response.addHeader(environment.getProperty(AUTH_TOKEN_HEADER), authenticationTokens[0]);
+        response.addHeader(environment.getProperty(REF_TOKEN_HEADER), authenticationTokens[1]);
     }
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.writeValue(response.getWriter(), new ErrorResponse(failed));
-        super.unsuccessfulAuthentication(request, response, failed);
+        if (failed instanceof AccountExpiredException) {
+            response.setStatus(455);
+        } else if (failed instanceof DisabledException) {
+            response.setStatus(456);
+        } else {
+            super.unsuccessfulAuthentication(request, response, failed);
+        }
     }
 }

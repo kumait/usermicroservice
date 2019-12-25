@@ -1,10 +1,17 @@
 package io.primecoders.voctrainer.userservice.models.web.responses;
 
-import io.primecoders.voctrainer.userservice.infra.exceptions.CodedException;
+import io.primecoders.voctrainer.userservice.infra.exceptions.APIException;
 
 public class ErrorResponse {
     private String code;
     private String message;
+
+    public static ErrorResponse from(APIException ex) {
+        return new ErrorResponse(ex.getCode(), ex.getMessage());
+    }
+
+    public ErrorResponse() {
+    }
 
     public ErrorResponse(String code) {
         this.code = code;
@@ -13,13 +20,6 @@ public class ErrorResponse {
     public ErrorResponse(String code, String message) {
         this.code = code;
         this.message = message;
-    }
-
-    public ErrorResponse(Exception ex) {
-        this.message = ex.getMessage();
-        if (ex instanceof CodedException) {
-            this.code = ((CodedException)ex).getCode();
-        }
     }
 
     public String getCode() {

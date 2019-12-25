@@ -1,32 +1,31 @@
 package io.primecoders.voctrainer.userservice.infra.exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Not found")
-public class NotFoundException extends CodedException {
+public class NotFoundException extends APIException {
+    private static final int STATUS = HttpStatus.NOT_FOUND.value();
 
     public NotFoundException() {
-        super("NOT_FOUND");
+        super(null, STATUS);
     }
 
     public NotFoundException(String code) {
-        super(code);
+        super(code, STATUS);
     }
 
     public NotFoundException(String code, String message) {
-        super(code, message);
+        super(code, STATUS, message);
     }
 
     public NotFoundException(String code, String message, Throwable cause) {
-        super(code, message, cause);
+        super(code, STATUS, message, cause);
     }
 
-    public NotFoundException(Throwable cause, String code) {
-        super(cause, code);
+    public NotFoundException(String code, Throwable cause) {
+        super(code, STATUS, cause);
     }
 
     public NotFoundException(String code, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(code, message, cause, enableSuppression, writableStackTrace);
+        super(code, STATUS, message, cause, enableSuppression, writableStackTrace);
     }
 }

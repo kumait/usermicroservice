@@ -1,22 +1,24 @@
 package io.primecoders.voctrainer.userservice.infra;
 
-import io.primecoders.voctrainer.userservice.infra.exceptions.business.TokenExpiredException;
+import io.primecoders.voctrainer.userservice.infra.exceptions.APIException;
+import io.primecoders.voctrainer.userservice.models.web.responses.ErrorResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 @ControllerAdvice
 public class ApplicationExceptionHandler {
 
-    @ExceptionHandler(TokenExpiredException.class)
-    public String handleExceptions(Exception ex, HttpServletResponse response) {
-        try {
-            response.sendError(460);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ex.getMessage();
+    @ExceptionHandler(APIException.class)
+    public ResponseEntity<ErrorResponse> handleExceptions(APIException ex, HttpServletResponse response) {
+        return ResponseEntity.status(ex.getStatus()).body(ErrorResponse.from(ex));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleExceptions(Exception ex, HttpServletResponse response) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 }

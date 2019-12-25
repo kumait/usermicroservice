@@ -1,32 +1,31 @@
 package io.primecoders.voctrainer.userservice.infra.exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Bad Request")
-public class BadRequestException extends CodedException {
+public class BadRequestException extends APIException {
+    private static final int STATUS = HttpStatus.BAD_REQUEST.value();
 
     public BadRequestException() {
-        super("BAD_REQUEST");
+        super(null, STATUS);
     }
 
     public BadRequestException(String code) {
-        super(code);
+        super(code, STATUS);
     }
 
     public BadRequestException(String code, String message) {
-        super(code, message);
+        super(code, STATUS, message);
     }
 
     public BadRequestException(String code, String message, Throwable cause) {
-        super(code, message, cause);
+        super(code, STATUS, message, cause);
     }
 
-    public BadRequestException(Throwable cause, String code) {
-        super(cause, code);
+    public BadRequestException(String code, Throwable cause) {
+        super(code, STATUS, cause);
     }
 
     public BadRequestException(String code, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(code, message, cause, enableSuppression, writableStackTrace);
+        super(code, STATUS, message, cause, enableSuppression, writableStackTrace);
     }
 }
