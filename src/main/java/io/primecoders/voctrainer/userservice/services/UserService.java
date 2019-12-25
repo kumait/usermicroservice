@@ -1,9 +1,11 @@
 package io.primecoders.voctrainer.userservice.services;
 
 import io.primecoders.voctrainer.userservice.infra.IdGenerator;
+import io.primecoders.voctrainer.userservice.infra.exceptions.APIException;
 import io.primecoders.voctrainer.userservice.infra.security.TokenService;
 import io.primecoders.voctrainer.userservice.infra.security.TokenType;
 import io.primecoders.voctrainer.userservice.models.business.ChangePasswordModel;
+import io.primecoders.voctrainer.userservice.models.business.RefreshTokenModel;
 import io.primecoders.voctrainer.userservice.models.business.ResetPasswordModel;
 import io.primecoders.voctrainer.userservice.models.business.User;
 import io.primecoders.voctrainer.userservice.models.common.AccountStatus;
@@ -12,6 +14,7 @@ import io.primecoders.voctrainer.userservice.models.entities.UserEntity;
 import io.primecoders.voctrainer.userservice.repositories.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -62,7 +65,7 @@ public class UserService implements UserDetailsService {
 
     public User createUser(User user) {
         UserEntity existing = userRepository.findByUsername(user.getUsername());
-        affirm(existing == null, "ACCOUNT_ALREADY_EXISTS");
+        affirm(existing == null, new APIException("ACCOUNT_ALREADY_EXISTS", HttpStatus.CONFLICT.value()));
 
         UserEntity userEntity = mapper.map(user, UserEntity.class);
         userEntity.setId(idGenerator.getNewId());
@@ -97,5 +100,19 @@ public class UserService implements UserDetailsService {
         affirmAccess(passwordEncoder.encode(changePasswordModel.getOldPassword()).equals(userEntity.getPassword()));
         userEntity.setPassword(passwordEncoder.encode(changePasswordModel.getNewPassword()));
         userRepository.save(userEntity);
+    }
+
+    public User getInfo() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity userEntity = requireExists(userRepository.findByUsername(username));
+        return mapper.map(userEntity, User.class);
+    }
+
+    public RefreshTokenModel refreshToken(String refreshToken) {
+        String username = tokenService.verifyAndGet(refreshToken, TokenType.REFRESH).getUsername();
+        UserEntity userEntity = requireExists(userRepository.findByUsername(username));
+        affirmAccess(userEntity.getAccountStatus() == AccountStatus.ACTIVE);
+        String[] tokens = tokenService.createAuthenticationTokens(username, userEntity.getRole().toString());
+        return new RefreshTokenModel(tokens[0], tokens[1]);
     }
 }

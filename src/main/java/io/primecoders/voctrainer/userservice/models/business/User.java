@@ -5,6 +5,8 @@ import io.primecoders.voctrainer.userservice.models.common.UserRole;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 public class User {
@@ -13,6 +15,7 @@ public class User {
     private String lastName;
     private String username;
     private String password;
+    private Date created;
     private UserRole type;
     private AccountStatus accountStatus;
 }

@@ -1,9 +1,6 @@
 package io.primecoders.voctrainer.userservice.infra.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.primecoders.voctrainer.userservice.infra.exceptions.authorization.InvalidTokenException;
 import io.primecoders.voctrainer.userservice.infra.exceptions.authorization.TokenExpiredException;
@@ -50,7 +47,7 @@ public class TokenService {
                 .setIssuedAt(new Date(now))
                 .setSubject(username)
                 .claim(ROLE, roles)
-                .claim(TYPE, TokenType.AUTHENTICATION)
+                .claim(TYPE, TokenType.AUTHENTICATION.getCode())
                 .setExpiration(new Date(now + authenticationTokenExpiration * 1000))
                 .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
@@ -59,8 +56,9 @@ public class TokenService {
                 .setIssuer(ISSUER)
                 .setIssuedAt(new Date(now))
                 .setSubject(username)
-                .claim(TYPE, TokenType.REFRESH)
-                .setExpiration(new Date(now + authenticationTokenExpiration * 1000))
+                .claim(ROLE, roles)
+                .claim(TYPE, TokenType.REFRESH.getCode())
+                .setExpiration(new Date(now + refreshTokenExpiration * 1000))
                 .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
 
@@ -73,7 +71,7 @@ public class TokenService {
                 .setIssuer(ISSUER)
                 .setIssuedAt(new Date(now))
                 .setSubject(username)
-                .claim(TYPE, TokenType.ACCOUNT_ACTIVATION)
+                .claim(TYPE, TokenType.ACCOUNT_ACTIVATION.getCode())
                 .setExpiration(new Date(now + activationTokenExpiration * 1000))
                 .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
@@ -85,17 +83,20 @@ public class TokenService {
                 .setIssuer(ISSUER)
                 .setIssuedAt(new Date(now))
                 .setSubject(username)
-                .claim(TYPE, TokenType.PASSWORD_RESET)
+                .claim(TYPE, TokenType.PASSWORD_RESET.getCode())
                 .setExpiration(new Date(now + passwordResetTokenExpiration * 1000))
                 .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
 
     public Jws<Claims> verifyAndParse(String token, TokenType type) {
-        Jws<Claims> claimsJws = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-
-        if (claimsJws.getBody().getExpiration().getTime() < System.currentTimeMillis()) {
+        Jws<Claims> claimsJws;
+        try {
+            claimsJws = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+        } catch (ExpiredJwtException ex) {
             throw new TokenExpiredException();
+        } catch (Exception ex) {
+            throw new InvalidTokenException();
         }
 
         if (!claimsJws.getBody().get(TYPE).equals(type.getCode())) {

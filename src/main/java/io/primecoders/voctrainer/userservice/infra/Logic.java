@@ -12,7 +12,6 @@ public class Logic {
 
     public static void affirm(boolean that, APIException ex) {
         if (!that) {
-            LOGGER.error(ex.getMessage(), ex);
             throw ex;
         }
     }

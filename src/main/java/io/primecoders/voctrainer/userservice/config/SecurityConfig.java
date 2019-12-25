@@ -42,8 +42,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return authenticationFilter;
     }
 
+    private AbstractAuthenticationProcessingFilter refreshTokenFilter() throws Exception {
+        AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager(), userService, tokenService, environment);
+        authenticationFilter.setFilterProcessesUrl(Objects.requireNonNull(environment.getProperty(ENV_SECURITY_LOGIN_URL)));
+        return authenticationFilter;
+    }
+
     private BasicAuthenticationFilter authorizationFilter() throws Exception {
-        return new AuthorizationFilter(authenticationManager(), tokenService);
+        return new AuthorizationFilter(authenticationManager(), tokenService, environment);
     }
 
     @Override
@@ -54,6 +60,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         // allow user to register
         http.authorizeRequests().antMatchers(HttpMethod.POST, "/users").permitAll();
+
+        http.authorizeRequests().antMatchers(HttpMethod.POST, "/users/refresh-token").permitAll();
 
         // allow status access
         http.authorizeRequests().antMatchers("/status/**").permitAll();
@@ -67,7 +75,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.addFilter(authenticationFilter());
 
         // add authorization filter
-        http.addFilter(authenticationFilter());
+        http.addFilter(authorizationFilter());
     }
 
     @Override

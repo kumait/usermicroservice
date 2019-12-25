@@ -1,9 +1,10 @@
 package io.primecoders.voctrainer.userservice.infra.exceptions.authorization;
 
+import io.primecoders.voctrainer.userservice.infra.ExtendedHttpStatus;
 import io.primecoders.voctrainer.userservice.infra.exceptions.APIException;
 
 public class TokenExpiredException extends APIException {
-    private static final int STATUS = 461;
+    private static final int STATUS = ExtendedHttpStatus.TOKEN_EXPIRED.value();
 
     public TokenExpiredException() {
         super(null, STATUS);
