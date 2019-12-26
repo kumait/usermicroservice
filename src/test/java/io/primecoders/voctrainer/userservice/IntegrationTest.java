@@ -1,9 +1,13 @@
 package io.primecoders.voctrainer.userservice;
 
+import io.primecoders.voctrainer.userservice.infra.ExtendedHttpStatus;
 import io.primecoders.voctrainer.userservice.infra.security.TokenService;
 import io.primecoders.voctrainer.userservice.models.web.requests.CreateUserRequest;
 import io.primecoders.voctrainer.userservice.models.web.requests.LoginRequest;
 import io.primecoders.voctrainer.userservice.models.web.responses.CreateUserResponse;
+import io.primecoders.voctrainer.userservice.models.web.responses.LoginResponse;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -51,7 +55,8 @@ public class IntegrationTest {
     }
 
     @Test()
-    public void testCreateUser() throws IOException {
+    @DisplayName("successful create user")
+    public void testSuccessfulCreateUser() throws IOException {
         CreateUserRequest createUserRequest = new CreateUserRequest(FIRST_NAME, LAST_NAME, EMAIL, PASSWORD);
         HttpEntity<CreateUserRequest> entity = new HttpEntity<>(createUserRequest, headers(null));
         ResponseEntity<CreateUserResponse> createUserResponseResponseEntity = rest.exchange(getUrl("/users"), HttpMethod.POST, entity, CreateUserResponse.class);
@@ -66,11 +71,44 @@ public class IntegrationTest {
         });
     }
 
+    @Test
+    @DisplayName("failing create user")
+    @Disabled
+    public void testFailingCreateUser() {
+
+    }
+
     @Test()
-    public void testFailedLogin() {
+    @DisplayName("wrong credentials login")
+    public void testWrongCredentialsLogin() {
         HttpEntity<LoginRequest> entity = new HttpEntity<>(new LoginRequest("fake_username", "fake_password"));
         ResponseEntity<Void> loginResponseEntity = rest.exchange(getUrl(LOGIN_URL), HttpMethod.POST, entity, Void.class);
         assertEquals(HttpStatus.FORBIDDEN, loginResponseEntity.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("succcessful login")
+    public void testSuccessfulLogin() {
+        String username = "tester@test.com";
+        String password = "test123456";
+        CreateUserRequest createUserRequest = new CreateUserRequest("tester", "tester", username, password);
+        HttpEntity<CreateUserRequest> entity = new HttpEntity<>(createUserRequest, headers(null));
+        ResponseEntity<CreateUserResponse> createUserResponseResponseEntity = rest.exchange(getUrl("/users"), HttpMethod.POST, entity, CreateUserResponse.class);
+        assert createUserResponseResponseEntity.getStatusCode() == HttpStatus.CREATED;
+
+        LoginRequest loginRequest = new LoginRequest(username, password);
+        HttpEntity<LoginRequest> loginRequestHttpEntity = new HttpEntity<>(loginRequest, headers(null));
+        ResponseEntity<LoginResponse> loginResponseResponseEntity = rest.exchange(getUrl("/login"), HttpMethod.POST, loginRequestHttpEntity, LoginResponse.class);
+
+        assertEquals(ExtendedHttpStatus.ACCOUNT_NOT_ACTIVE.value(), loginResponseResponseEntity.getStatusCodeValue());
+
+
+        /*assertAll(
+                () -> assertEquals(HttpStatus.OK, loginResponseResponseEntity.getStatusCode()),
+                () -> assertNotNull(loginResponseResponseEntity.getBody()),
+                () -> assertNotNull(loginResponseResponseEntity.getBody().getToken()),
+                () -> assertNotNull(loginResponseResponseEntity.getBody().getRefreshToken())
+        );*/
     }
 
     /*private ResponseEntity<String> activate(EmailActivationDto emailActivationDto) {
