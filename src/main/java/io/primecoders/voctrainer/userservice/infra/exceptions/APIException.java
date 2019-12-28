@@ -4,6 +4,10 @@ public class APIException extends RuntimeException {
     private String code;
     private int status;
 
+    public APIException(int status) {
+        this.status = status;
+    }
+
     public APIException(String code, int status) {
         this.code = code;
         this.status = status;

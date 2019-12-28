@@ -3,6 +3,7 @@ package io.primecoders.voctrainer.userservice.infra;
 public enum ExtendedHttpStatus {
     ACCOUNT_NOT_ACTIVE(455),
     ACCOUNT_DISABLED(456),
+    ACCOUNT_ALREADY_ACTIVE(457),
     INVALID_TOKEN(460),
     TOKEN_EXPIRED(461);
 

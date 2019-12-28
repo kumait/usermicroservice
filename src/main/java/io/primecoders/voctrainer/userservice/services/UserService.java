@@ -1,5 +1,6 @@
 package io.primecoders.voctrainer.userservice.services;
 
+import io.primecoders.voctrainer.userservice.infra.ExtendedHttpStatus;
 import io.primecoders.voctrainer.userservice.infra.IdGenerator;
 import io.primecoders.voctrainer.userservice.infra.exceptions.APIException;
 import io.primecoders.voctrainer.userservice.infra.security.TokenService;
@@ -14,7 +15,6 @@ import io.primecoders.voctrainer.userservice.models.entities.UserEntity;
 import io.primecoders.voctrainer.userservice.repositories.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -81,8 +81,8 @@ public class UserService implements UserDetailsService {
         String username = tokenService.verifyAndGet(token, TokenType.PASSWORD_RESET).getUsername();
         UserEntity userEntity = requireExists(userRepository.findByUsername(username));
 
-        affirmAccess(!(userEntity.getAccountStatus() == AccountStatus.DISABLED), "ACCOUNT_IS_DISABLED");
-        affirm(!(userEntity.getAccountStatus() == AccountStatus.ACTIVE), "ACCOUNT_ALREADY_ACTIVE");
+        affirm(!(userEntity.getAccountStatus() == AccountStatus.DISABLED), new APIException(ExtendedHttpStatus.ACCOUNT_DISABLED.value()));
+        affirm(!(userEntity.getAccountStatus() == AccountStatus.ACTIVE), new APIException(ExtendedHttpStatus.ACCOUNT_ALREADY_ACTIVE.value()));
 
         userEntity.setAccountStatus(AccountStatus.ACTIVE);
         userRepository.save(userEntity);
@@ -98,7 +98,7 @@ public class UserService implements UserDetailsService {
     public void changePassword(ChangePasswordModel changePasswordModel) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         UserEntity userEntity = requireExists(userRepository.findByUsername(username));
-        affirmAccess(passwordEncoder.encode(changePasswordModel.getOldPassword()).equals(userEntity.getPassword()));
+        affirmAccess(passwordEncoder.matches(changePasswordModel.getOldPassword(), userEntity.getPassword()));
         userEntity.setPassword(passwordEncoder.encode(changePasswordModel.getNewPassword()));
         userRepository.save(userEntity);
     }
